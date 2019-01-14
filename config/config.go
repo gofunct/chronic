@@ -4,15 +4,25 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron"
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+	kitlog "github.com/go-kit/kit/log"
 	"log"
 	"os"
 	"os/user"
 	"runtime"
 )
 
-var homeDir, _ = homedir.Dir()
+func init() {
+	logger := kitlog.NewJSONLogger(kitlog.NewSyncWriter(os.Stdout))
+	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller, "user", os.Getenv("USER"))
+	log.SetOutput(kitlog.NewStdlibAdapter(logger))
+}
 
+var homeDir, _ = homedir.Dir()
+var sys = &afero.Afero{
+	Fs: afero.NewOsFs(),
+}
 const fileName = ".chronic"
 
 type Chronic struct {
@@ -20,7 +30,7 @@ type Chronic struct {
 	*viper.Viper
 }
 
-func New(e ...*cron.Entry) *Chronic {
+func New() *Chronic {
 	return &Chronic{
 		Cron:  cron.New(),
 		Viper: viper.New(),
@@ -75,10 +85,21 @@ func (c *Chronic) Annotate() map[string]string {
 
 func (c *Chronic) Write() error {
 	// If a config file is found, read it in.
+	b, err := sys.Exists(homeDir+"/.chronic.yaml")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if !b {
+		f, err := sys.Create(homeDir+"/.chronic.yaml")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		c.SetConfigFile(f.Name())
+	}
 	if err := c.ReadInConfig(); err != nil {
 		log.Println("failed to read config file, writing defaults...")
 		if err := c.WriteConfig(); err != nil {
-			return errors.WithStack(err)
+			return errors.Wrap(err, "failed to write config")
 		}
 
 	} else {
