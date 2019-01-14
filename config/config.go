@@ -38,37 +38,18 @@ func New() *Chronic {
 }
 
 func (c *Chronic) Init() error {
-	ex, err := os.Executable()
-	if err != nil {
-		return errors.WithStack(err)
-	}
 	c.AddConfigPath(homeDir)
 	c.SetConfigName(fileName)
 	c.AutomaticEnv()
 
-	c.SetDefault("home", homeDir)
-	c.SetDefault("file_name", fileName)
-	c.SetDefault("executable", ex)
-	gr, err := os.Getgroups()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	c.SetDefault("groups", gr)
-	host, err := os.Hostname()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	c.SetDefault("env", os.Environ())
-	c.SetDefault("uid", os.Getuid())
-	c.SetDefault("args", os.Args)
-	c.SetDefault("host_name", host)
-	c.SetDefault("pid", os.Getpid())
-	c.SetDefault("goarch", runtime.GOARCH)
-	c.SetDefault("compiler", runtime.Compiler)
-	c.SetDefault("runtime_version", runtime.Version())
-	c.SetDefault("goos", runtime.GOOS)
+	c.SetDefault("os.env", os.Environ())
+
+	c.SetDefault("runtime.goarch", runtime.GOARCH)
+	c.SetDefault("runtime.compiler", runtime.Compiler)
+	c.SetDefault("runtime.version", runtime.Version())
+	c.SetDefault("runtime.goos", runtime.GOOS)
 	usr, _ := user.Current()
-	c.SetDefault("user", usr)
+	c.SetDefault("os.user", usr)
 	return nil
 }
 
