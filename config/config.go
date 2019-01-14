@@ -53,15 +53,15 @@ func (c *Chronic) Init() error {
 	return nil
 }
 
-func (c *Chronic) Annotate() map[string]string {
-	settings := c.AllSettings()
-	an := make(map[string]string)
-	for k, v := range settings {
-		if t, ok := v.(string); ok == true {
-			an[k] = t
+func Annotate(v *viper.Viper) map[string]string {
+		settings := v.AllSettings()
+		an := make(map[string]string)
+		for k, v := range settings {
+			if t, ok := v.(string); ok == true {
+				an[k] = t
+			}
 		}
-	}
-	return an
+		return an
 }
 
 func (c *Chronic) Write() error {
